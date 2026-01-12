@@ -12,7 +12,7 @@ if (!codGym) {
 } else {
   const SHEET_ID = "1Xgy4knXFneFKBVGwXveUoHdiQIeV8i_G1J8CwMbyxBo";
   const query = encodeURIComponent(
-    `select B, F, G where A='${codGym}'`
+    `select B where A='${codGym}'`
   );
 
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=${query}`;
@@ -31,17 +31,16 @@ if (!codGym) {
         return;
       }
 
-      const row = data.table.rows[0].c;
+      const nombreGym = data.table.rows[0].c[0].v;
 
       info.innerHTML = `
         Vas a registrar tu asistencia en<br><br>
-        <strong>${row[0].v}</strong><br><br>
-        Precio normal por clase: $${row[1].v}<br>
-        Precio preferencial APP: $${row[2].v}
+        <strong>${nombreGym}</strong>
       `;
     })
-    .catch(() => {
+    .catch(err => {
       info.innerText = "Error cargando información";
+      console.error(err);
     });
 }
 
