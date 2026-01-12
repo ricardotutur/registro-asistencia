@@ -1,122 +1,67 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro de Asistencia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 20px;
-    }
-    .card {
-      max-width: 420px;
-      margin: auto;
-      background: white;
-      padding: 24px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-    }
-    p {
-      text-align: center;
-      line-height: 1.4;
-    }
-    input {
-      width: 100%;
-      padding: 14px;
-      margin-top: 16px;
-      font-size: 16px;
-    }
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      background: #111;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    button:disabled {
-      background: #ccc;
-    }
-    .ok { color: green; text-align: center; }
-    .err { color: red; text-align: center; }
-  </style>
+<meta charset="UTF-8">
+<title>Registro de Asistencia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial; background:#f5f5f5; padding:20px }
+.card {
+  max-width:420px; margin:auto; background:white;
+  padding:24px; border-radius:10px;
+}
+input, button {
+  width:100%; padding:14px; margin-top:14px;
+  font-size:16px;
+}
+button { background:#000; color:white; border:none }
+</style>
 </head>
+
 <body>
+<div class="card">
+  <h3 id="info">Cargando información…</h3>
+  <input id="codigo" placeholder="Cédula (10 dígitos)" maxlength="10">
+  <button id="btn" disabled>Registrar asistencia</button>
+  <p id="msg"></p>
+</div>
 
-  <div class="card">
-    <h2>Registro de asistencia</h2>
+<script>
+const params = new URLSearchParams(location.search);
+const codGym = params.get("cod_gym");
 
-    <p id="info">Cargando información…</p>
+const SHEET_ID = "1Xgy4knXFneFKBVGwXveUoHdiQIeV8i_G1J8CwMbyxBo";
+const QUERY = encodeURIComponent(
+  `select B, F, G where A='${codGym}'`
+);
 
-    <input
-      type="text"
-      id="codigo"
-      placeholder="Ingresa tu código personal (10 dígitos)"
-      maxlength="10"
-      inputmode="numeric"
-    />
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=${QUERY}`;
 
-    <button id="btn" disabled>Registrar asistencia</button>
+fetch(URL)
+  .then(r => r.text())
+  .then(t => {
+    const json = JSON.parse(t.substr(47).slice(0, -2));
+    const row = json.table.rows[0].c;
 
-    <p id="msg"></p>
-  </div>
+    document.getElementById("info").innerHTML = `
+      Vas a registrar tu asistencia en<br><br>
+      <strong>${row[0].v}</strong><br><br>
+      Precio normal por clase: $${row[1].v}<br>
+      Precio preferencial APP: $${row[2].v}
+    `;
+  });
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const codGym = params.get("cod_gym");
+const input = document.getElementById("codigo");
+const btn = document.getElementById("btn");
 
-    const info = document.getElementById("info");
-    const btn = document.getElementById("btn");
-    const input = document.getElementById("codigo");
-    const msg = document.getElementById("msg");
+input.oninput = () => {
+  btn.disabled = !/^\d{10}$/.test(input.value);
+};
 
-    if (!codGym) {
-      info.innerText = "Gym no identificado";
-    } else {
-      fetch(`https://script.google.com/macros/s/AKfycbzkYONlIjtyGXmcu_3qckRwtT5UVbUKrwuPl8yvKQGZ9mGDFU90GiKRKO8NX2Fl2q4ZkA/exec?cod_gym=${codGym}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.ok) {
-            info.innerText = "Gym no identificado";
-            return;
-          }
-
-          info.innerHTML = `
-            Vas a registrar tu asistencia en<br><br>
-            <strong>${data.nombre}</strong><br><br>
-            Precio normal por clase: $${data.pvp_clase}<br>
-            Precio preferencial APP: $${data.pvp_app}
-          `;
-        });
-    }
-
-    input.addEventListener("input", () => {
-      btn.disabled = !/^\d{10}$/.test(input.value);
-    });
-
-    btn.addEventListener("click", () => {
-      fetch("https://script.google.com/macros/s/AKfycbzkYONlIjtyGXmcu_3qckRwtT5UVbUKrwuPl8yvKQGZ9mGDFU90GiKRKO8NX2Fl2q4ZkA/exec", {
-        method: "POST",
-        body: JSON.stringify({
-          cod_gym: codGym,
-          codigo: input.value
-        })
-      })
-      .then(res => res.json())
-      .then(r => {
-        msg.className = r.ok ? "ok" : "err";
-        msg.innerText = r.message;
-      });
-    });
-  </script>
-
+btn.onclick = () => {
+  document.getElementById("msg").innerText =
+    "✔️ Asistencia registrada (demo)";
+};
+</script>
 </body>
 </html>
