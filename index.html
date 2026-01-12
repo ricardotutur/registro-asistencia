@@ -1,54 +1,74 @@
-<script>
-const params = new URLSearchParams(window.location.search);
-const codGym = params.get("cod_gym");
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de asistencia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 40px 20px;
+    }
+    .card {
+      max-width: 420px;
+      margin: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
 
-const info = document.getElementById("info");
-const btn = document.getElementById("btn");
-const input = document.getElementById("codigo");
-const msg = document.getElementById("msg");
+  <div class="card">
+    <h2 id="resultado">Cargando información…</h2>
+  </div>
 
-if (!codGym) {
-  info.innerText = "Gym no identificado";
-} else {
-  const SHEET_ID = "1Xgy4knXFneFKBVGwXveUoHdiQIeV8i_G1J8CwMbyxBo";
-  const query = encodeURIComponent(
-    `select B where A='${codGym}'`
-  );
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const codGym = params.get("cod_gym");
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=${query}`;
+    const el = document.getElementById("resultado");
 
-  fetch(url)
-    .then(res => res.text())
-    .then(text => {
-      const jsonText = text.substring(
-        text.indexOf("{"),
-        text.lastIndexOf("}") + 1
+    if (!codGym) {
+      el.innerText = "Gym no identificado";
+    } else {
+      const SHEET_ID = "1Xgy4knXFneFKBVGwXveUoHdiQIeV8i_G1J8CwMbyxBo";
+      const query = encodeURIComponent(
+        `select B where A='${codGym}'`
       );
-      const data = JSON.parse(jsonText);
 
-      if (!data.table.rows.length) {
-        info.innerText = "Gym no identificado";
-        return;
-      }
+      const url =
+        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=${query}`;
 
-      const nombreGym = data.table.rows[0].c[0].v;
+      fetch(url)
+        .then(r => r.text())
+        .then(t => {
+          const jsonText = t.substring(
+            t.indexOf("{"),
+            t.lastIndexOf("}") + 1
+          );
+          const data = JSON.parse(jsonText);
 
-      info.innerHTML = `
-        Vas a registrar tu asistencia en<br><br>
-        <strong>${nombreGym}</strong>
-      `;
-    })
-    .catch(err => {
-      info.innerText = "Error cargando información";
-      console.error(err);
-    });
-}
+          if (!data.table.rows.length) {
+            el.innerText = "Gym no encontrado";
+            return;
+          }
 
-input.addEventListener("input", () => {
-  btn.disabled = !/^\d{10}$/.test(input.value);
-});
+          el.innerHTML =
+            "Vas a registrar tu asistencia en<br><br><strong>" +
+            data.table.rows[0].c[0].v +
+            "</strong>";
+        })
+        .catch(err => {
+          el.innerText = "Error cargando información";
+          console.error(err);
+        });
+    }
+  </script>
 
-btn.addEventListener("click", () => {
-  msg.innerText = "✔️ Asistencia registrada (demo)";
-});
-</script>
+</body>
+</html>
